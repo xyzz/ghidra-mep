@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<language_definitions>
+  <language processor="mep"
+            endian="little"
+            size="32"
+            variant="default"
+            version="1.0"
+            slafile="mep.sla"
+            processorspec="mep.pspec"
+            id="MeP:LE:32:default">
+    <description>Toshiba MeP processor 32-bit little-endian</description>
+    <compiler name="default" spec="mep.cspec" id="default"/>
+  </language>
+</language_definitions>

@@ -1,0 +1,233 @@
+# Main slaspec must define endianess and alignment
+
+define space ram type=ram_space size=4 wordsize=1 default;
+
+define space register type=register_space size=4;
+
+define register offset=0x1000 size=4 [
+	r0  r1  r2  r3  r4  r5  r6  r7
+	r8  r9 r10 r11 r12  tp  gp  sp
+];
+
+define register offset=0x2000 size=4 [
+	pc  lp  sar res03
+	rpb rpe rpc
+];
+
+define register offset=0x00 size=8   contextreg;
+define context contextreg
+	repeat_end = (0, 4) noflow
+#	rpe_ctx = (32, 63) noflow
+	rpb_ctx = (32, 63) noflow
+;
+
+define token instr(16)
+	op0000 = (0, 0)
+	op0001 = (0, 1)
+	op0003 = (0, 3)
+	op0007 = (0, 7)
+	op0015 = (0, 15)
+	op0102 = (1, 2)
+	op0207 = (2, 7)
+	op0407 = (4, 7)
+	op1215 = (12, 15)
+	imm4 = (4, 7)
+	simm6 = (2, 7) signed
+	imm8 = (0, 7)
+	simm8 = (0, 7) signed
+	rn = (8, 11)
+	rm = (4, 7)
+	rl = (0, 3)
+	disp7 = (2, 6)
+	op0707 = (7, 7)
+	op1115 = (11, 15)
+	imm5 = (2, 6)
+	imm0410 = (4, 10)
+	imm0405 = (4, 5)
+	op0615 = (6, 15)
+	op0815 = (8, 15)
+	op0002 = (0, 2)
+	imm0307 = (3, 7)
+	disp0107 = (1, 7)
+	disp0111 = (1, 11) signed
+;
+
+define token ext(16)
+	imm1631 = (0, 15)
+	simm1631 = (0, 15) signed
+;
+
+attach variables [ rn rm rl ] [
+	r0  r1  r2  r3  r4  r5  r6  r7
+	r8  r9 r10 r11 r12  tp  gp  sp
+];
+
+define pcodeop swi;
+
+Simm6: "#"^simm6 is simm6 { export *[const]:4 simm6; }
+Simm8: "#"^simm8 is simm8 { export *[const]:4 simm8; }
+
+Imm16: "#"^imm1631 is imm1631 { export *[const]:4 imm1631; }
+Simm16: "#"^simm1631 is simm1631 { export *[const]:4 simm1631; }
+
+# Control register
+Creg: regaddr is op0000 & op0407 [ regaddr = ((op0000 << 4) | op0407) * 4 + 0x2000; ] { export *[register]:4 regaddr; }
+
+RepeatTgt: is rpb_ctx {
+	export *[ram]:4 rpb_ctx;
+}
+
+# Simulate mep delay slot in repeat/erepeat instructions
+:^instruction is repeat_end=2 & instruction [ repeat_end=1; globalset(inst_next, repeat_end); repeat_end=0; globalset(inst_next, rpb_ctx); ] {
+	build instruction;
+}
+
+:^instruction is repeat_end=1 & instruction & RepeatTgt [ repeat_end=0; ] {
+	build instruction;
+	goto RepeatTgt;
+}
+
+:movh rn, Imm16 is op0007=0x21 & op1215=0xC & rn ; Imm16 {
+	rn = Imm16 << 16;
+}
+
+:add3 rn, rm, Simm16 is op0003=0 & op1215=0xC & rn & rm ; Simm16 {
+	rn = rm + sext(Simm16:2);
+}
+
+:add3 rl, rn, rm is op1215=9 & rl & rn & rm {
+	rl = rn + rm;
+}
+
+:add3 rn, "sp", imm is op0001=0 & op0707=0 & op1215=4 & rn & imm5 [ imm = imm5 << 2; ]  {
+	rn = sp + imm;
+}
+
+:lw rn, "("^rm^")" is op0003=0xE & op1215=0 & rn & rm {
+	rn = *[ram]:4 rm;
+}
+
+:lw rn, abs24 is op0001=3 & op1215=0xE & rn & op0207 ; imm1631 [ abs24 = (imm1631 << 8) | (op0207 << 2); ] {
+	rn = *[ram]:4 abs24:4;
+}
+
+:ret is op0015=0x7002 {
+	pc = lp;
+	return [pc];
+}
+
+:erepeat end is op0015=0xe019 ; simm1631 [ rpb_ctx = inst_start + 4; end = inst_start + (simm1631 << 1); repeat_end = 2; globalset(end, repeat_end); globalset(end, rpb_ctx); ] {
+	rpb = inst_next;
+	rpe = end;
+}
+
+:mov rn, rm is op0003=0 & op1215=0 & rn & rm {
+	rn = rm;
+}
+
+:mov rn, Simm8 is op1215=5 & rn & Simm8 {
+	rn = Simm8;
+}
+
+:add rn, Simm6 is op0001=0 & op1215=6 & rn & Simm6 {
+	rn = rn + Simm6;
+}
+
+:ldc rn, Creg is op0102=1 & op1215=7 & rn & Creg {
+	rn = Creg;
+}
+
+:sw rn, "("^rm^")" is op0003=0xA & op1215=0 & rn & rm {
+	*[ram]:4 rm = rn;
+}
+
+:sw rn, off^"(sp)" is op0001=2 & op0707=0 & op1215=4 & rn & disp7 [ off = disp7 << 2; ] {
+	local tgt = sp + off;
+	*[ram]:4 tgt = rn;
+}
+
+:movu rn, imm24 is op1115=0x1A & rn & imm8 ; imm1631 [ imm24 = imm8 | (imm1631 << 8); ] {
+	rn = imm24;
+}
+
+# TODO: sign-extend
+:bsr tgt is op0003=9 & op1115=0x1B & imm0410 ; imm1631 [ tgt = inst_start + (((imm0410 << 1) | (imm1631 << 8))); ] {
+	lp = inst_next;
+	call [tgt:4];
+}
+
+:bsr tgt is op0000=1 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
+	lp = inst_next;
+	call [tgt:4];
+}
+
+:bra tgt is op0000=0 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
+	goto [tgt:4];
+}
+
+:swi imm0405 is op0003=6 & op0615=0x1C0 & imm0405 {
+# This is vita-specific
+# TODO: check it's actually correct
+	r0 = swi(imm0405:4, r1, r2, r3, r4);
+}
+
+:lw rn, off^"(sp)" is op0001=3 & op0707=0 & op1215=4 & rn & disp7 [ off = disp7 << 2; ] {
+	local tgt = sp + off;
+	rn = *[ram]:4 tgt;
+}
+
+# Jumps to $11 and $1 are returns (in vita code)
+:jmp rm is op0003=0xE & op0815=0x10 & rm & (rm=1 | rm=11) {
+	return [rm];
+}
+# Other jumps are just branches
+:jmp rm is op0003=0xE & op0815=0x10 & rm {
+	goto [rm];
+}
+
+:or3 rn, rm, Imm16 is op0003=4 & op1215=0xC & rn & rm ; Imm16 {
+	rn = rm | Imm16;
+}
+
+:and3 rn, rm, Imm16 is op0003=5 & op1215=0xC & rn & rm ; Imm16 {
+	rn = rm & Imm16;
+}
+
+:xor3 rn, rm, Imm16 is op0003=6 & op1215=0xC & rn & rm ; Imm16 {
+	rn = rm ^ Imm16;
+}
+
+:sll rn, imm0307 is op0002=6 & op1215=6 & rn & imm0307 {
+	rn = rn << imm0307;
+}
+
+:beqz rn, tgt is op0000=0 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
+	if (rn != 0) goto <skip>;
+	goto [tgt:4];
+	<skip>
+}
+
+:bnei rn, imm4, tgt is op0003=4 & op1215=0xE & rn & imm4 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn == imm4) goto <skip>;
+	pc = tgt;
+	goto [pc];
+	<skip>
+}
+
+:blti rn, imm4, tgt is op0003=0xC & op1215=0xE & rn & imm4 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn s>= imm4) goto <skip>;
+	pc = tgt;
+	goto [pc];
+	<skip>
+}
+
+:bgei rn, imm4, tgt is op0003=0x8 & op1215=0xE & rn & imm4 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn s< imm4) goto <skip>;
+	pc = tgt;
+	goto [pc];
+	<skip>
+}
+
+:neg rn, rm is op0003=1 & op1215=0 & rn & rm {
+	rn = -rm;
+}
