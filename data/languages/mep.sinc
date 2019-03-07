@@ -125,6 +125,93 @@ RepeatTgt: is rpb_ctx {
 	rn = rn ^ rm;
 }
 
+#
+# 3-arg logic
+#
+
+:and3 rn, rm, Imm16 is op0003=5 & op1215=0xC & rn & rm ; Imm16 {
+	rn = rm & Imm16;
+}
+
+:or3 rn, rm, Imm16 is op0003=4 & op1215=0xC & rn & rm ; Imm16 {
+	rn = rm | Imm16;
+}
+
+:xor3 rn, rm, Imm16 is op0003=6 & op1215=0xC & rn & rm ; Imm16 {
+	rn = rm ^ Imm16;
+}
+
+#
+# Load/Store reg
+#
+
+:lw rn, "("^rm^")" is op0003=0xE & op1215=0 & rn & rm {
+	rn = *[ram]:4 rm;
+}
+
+:sw rn, "("^rm^")" is op0003=0xA & op1215=0 & rn & rm {
+	*[ram]:4 rm = rn;
+}
+
+#
+# Load/Store sp-relative
+#
+
+:lw rn, off^"(sp)" is op0001=3 & op0707=0 & op1215=4 & rn & disp7 [ off = disp7 << 2; ] {
+	local tgt = sp + off;
+	rn = *[ram]:4 tgt;
+}
+
+:sw rn, off^"(sp)" is op0001=2 & op0707=0 & op1215=4 & rn & udisp0206 [ off = udisp0206 << 2; ] {
+	local tgt = sp + off;
+	*[ram]:4 tgt = rn;
+}
+
+#
+# Load/Store tp-relative
+#
+
+:sw rn, off^"(tp)" is op0001=2 & op0707=1 & op1115=8 & rn & udisp0206 [ off = udisp0206 << 2; ] {
+	local tgt = tp + off;
+	*[ram]:4 tgt = rn;
+}
+
+#
+# Load/Store disp16
+#
+
+:sw rn, simm1631^"("^rm^")" is op0003=0xA & op1215=0xC & rn & rm ; simm1631 {
+	local tgt = rm + simm1631;
+	*[ram]:4 tgt = rn;
+}
+
+#
+# Load/Store abs24
+#
+
+:lw rn, abs24 is op0001=3 & op1215=0xE & rn & op0207 ; imm1631 [ abs24 = (imm1631 << 8) | (op0207 << 2); ] {
+	rn = *[ram]:4 abs24:4;
+}
+
+#
+# Special arithmetics
+#
+
+# nor - TODO
+
+:neg rn, rm is op0003=1 & op1215=0 & rn & rm {
+	rn = -rm;
+}
+
+:abs rn, rm is op0003=1 & op1215=0xF & rn & rm ; imm1631=3 {
+	local tmp = (rn - rm);
+	if (tmp > 0) goto <skip>;
+	tmp = -tmp;
+	<skip>
+	rn = tmp;
+}
+
+
 :movh rn, Imm16 is op0007=0x21 & op1215=0xC & rn ; Imm16 {
 	rn = Imm16 << 16;
 }
@@ -139,14 +226,6 @@ RepeatTgt: is rpb_ctx {
 
 :add3 rn, "sp", imm is op0001=0 & op0707=0 & op1215=4 & rn & imm5 [ imm = imm5 << 2; ]  {
 	rn = sp + imm;
-}
-
-:lw rn, "("^rm^")" is op0003=0xE & op1215=0 & rn & rm {
-	rn = *[ram]:4 rm;
-}
-
-:lw rn, abs24 is op0001=3 & op1215=0xE & rn & op0207 ; imm1631 [ abs24 = (imm1631 << 8) | (op0207 << 2); ] {
-	rn = *[ram]:4 abs24:4;
 }
 
 :ret is op0015=0x7002 {
@@ -172,25 +251,6 @@ RepeatTgt: is rpb_ctx {
 
 :stc rn, Creg is op0103=4 & op1215=7 & rn & Creg {
 	Creg = rn;
-}
-
-:sw rn, "("^rm^")" is op0003=0xA & op1215=0 & rn & rm {
-	*[ram]:4 rm = rn;
-}
-
-:sw rn, off^"(sp)" is op0001=2 & op0707=0 & op1215=4 & rn & udisp0206 [ off = udisp0206 << 2; ] {
-	local tgt = sp + off;
-	*[ram]:4 tgt = rn;
-}
-
-:sw rn, off^"(tp)" is op0001=2 & op0707=1 & op1115=8 & rn & udisp0206 [ off = udisp0206 << 2; ] {
-	local tgt = tp + off;
-	*[ram]:4 tgt = rn;
-}
-
-:sw rn, simm1631^"("^rm^")" is op0003=0xA & op1215=0xC & rn & rm ; simm1631 {
-	local tgt = rm + simm1631;
-	*[ram]:4 tgt = rn;
 }
 
 :movu rn, imm24 is op1115=0x1A & rn & imm8 ; imm1631 [ imm24 = imm8 | (imm1631 << 8); ] {
@@ -223,11 +283,6 @@ RepeatTgt: is rpb_ctx {
 	r0 = swi(imm0405:4, r1, r2, r3, r4);
 }
 
-:lw rn, off^"(sp)" is op0001=3 & op0707=0 & op1215=4 & rn & disp7 [ off = disp7 << 2; ] {
-	local tgt = sp + off;
-	rn = *[ram]:4 tgt;
-}
-
 # Jumps to $11 and $1 are returns (in vita code)
 :jmp rm is op0003=0xE & op0815=0x10 & rm & (rm=1 | rm=11) {
 	return [rm];
@@ -240,18 +295,6 @@ RepeatTgt: is rpb_ctx {
 :jmp tgt is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ tgt = (inst_start & 0xF0000000) | (imm1631 << 8) | (imm0410 << 1); ] {
 	pc = tgt;
 	goto [pc];
-}
-
-:or3 rn, rm, Imm16 is op0003=4 & op1215=0xC & rn & rm ; Imm16 {
-	rn = rm | Imm16;
-}
-
-:and3 rn, rm, Imm16 is op0003=5 & op1215=0xC & rn & rm ; Imm16 {
-	rn = rm & Imm16;
-}
-
-:xor3 rn, rm, Imm16 is op0003=6 & op1215=0xC & rn & rm ; Imm16 {
-	rn = rm ^ Imm16;
 }
 
 :sll rn, imm0307 is op0002=6 & op1215=6 & rn & imm0307 {
@@ -296,18 +339,6 @@ RepeatTgt: is rpb_ctx {
 	pc = tgt;
 	goto [pc];
 	<skip>
-}
-
-:neg rn, rm is op0003=1 & op1215=0 & rn & rm {
-	rn = -rm;
-}
-
-:abs rn, rm is op0003=1 & op1215=0xF & rn & rm ; imm1631=3 {
-	local tmp = (rn - rm);
-	if (tmp > 0) goto <skip>;
-	tmp = -tmp;
-	<skip>
-	rn = tmp;
 }
 
 :sltu3 "r0", rn, rm is op0003=3 & op1215=0 & rn & rm {
