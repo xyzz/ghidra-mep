@@ -158,8 +158,8 @@ RepeatTgt: is rpb_ctx {
 	*[ram]:4 tgt = rn;
 }
 
-:sw rn, off^"("^rm^")" is op0003=0xA & op1215=0xC & rn & rm ; simm1631 [ off = simm1631; ] {
-	local tgt = rm + off;
+:sw rn, simm1631^"("^rm^")" is op0003=0xA & op1215=0xC & rn & rm ; simm1631 {
+	local tgt = rm + simm1631;
 	*[ram]:4 tgt = rn;
 }
 
