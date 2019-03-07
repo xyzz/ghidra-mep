@@ -38,6 +38,7 @@ define token instr(16)
 	rn = (8, 11)
 	rm = (4, 7)
 	rl = (0, 3)
+	udisp0206 = (2, 6)
 	disp7 = (2, 6)
 	op0707 = (7, 7)
 	op1115 = (11, 15)
@@ -48,8 +49,9 @@ define token instr(16)
 	op0815 = (8, 15)
 	op0002 = (0, 2)
 	imm0307 = (3, 7)
-	disp0107 = (1, 7)
+	disp0107 = (1, 7) signed
 	disp0111 = (1, 11) signed
+	op0103 = (1, 3)
 ;
 
 define token ext(16)
@@ -63,6 +65,7 @@ attach variables [ rn rm rl ] [
 ];
 
 define pcodeop swi;
+define pcodeop sleep;
 
 Simm6: "#"^simm6 is simm6 { export *[const]:4 simm6; }
 Simm8: "#"^simm8 is simm8 { export *[const]:4 simm8; }
@@ -133,16 +136,30 @@ RepeatTgt: is rpb_ctx {
 	rn = rn + Simm6;
 }
 
-:ldc rn, Creg is op0102=1 & op1215=7 & rn & Creg {
+:ldc rn, Creg is op0103=5 & op1215=7 & rn & Creg {
 	rn = Creg;
+}
+
+:stc rn, Creg is op0103=4 & op1215=7 & rn & Creg {
+	Creg = rn;
 }
 
 :sw rn, "("^rm^")" is op0003=0xA & op1215=0 & rn & rm {
 	*[ram]:4 rm = rn;
 }
 
-:sw rn, off^"(sp)" is op0001=2 & op0707=0 & op1215=4 & rn & disp7 [ off = disp7 << 2; ] {
+:sw rn, off^"(sp)" is op0001=2 & op0707=0 & op1215=4 & rn & udisp0206 [ off = udisp0206 << 2; ] {
 	local tgt = sp + off;
+	*[ram]:4 tgt = rn;
+}
+
+:sw rn, off^"(tp)" is op0001=2 & op0707=1 & op1115=8 & rn & udisp0206 [ off = udisp0206 << 2; ] {
+	local tgt = tp + off;
+	*[ram]:4 tgt = rn;
+}
+
+:sw rn, off^"("^rm^")" is op0003=0xA & op1215=0xC & rn & rm ; simm1631 [ off = simm1631; ] {
+	local tgt = rm + off;
 	*[ram]:4 tgt = rn;
 }
 
@@ -159,6 +176,11 @@ RepeatTgt: is rpb_ctx {
 :bsr tgt is op0000=1 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
 	lp = inst_next;
 	call [tgt:4];
+}
+
+:jsr rn is op0003=0xF & op0815=0x10 & rn {
+	lp = inst_next;
+	call rn;
 }
 
 :bra tgt is op0000=0 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
@@ -185,6 +207,11 @@ RepeatTgt: is rpb_ctx {
 	goto [rm];
 }
 
+:jmp tgt is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ tgt = (inst_start & 0xF0000000) | (imm1631 << 8) | (imm0410 << 1); ] {
+	pc = tgt;
+	goto [pc];
+}
+
 :or3 rn, rm, Imm16 is op0003=4 & op1215=0xC & rn & rm ; Imm16 {
 	rn = rm | Imm16;
 }
@@ -203,6 +230,19 @@ RepeatTgt: is rpb_ctx {
 
 :beqz rn, tgt is op0000=0 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
 	if (rn != 0) goto <skip>;
+	goto [tgt:4];
+	<skip>
+}
+
+
+:beq rn, rm, tgt is op0003=1 & op1215=0xE & rn & rm ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn != rm) goto <skip>;
+	goto [tgt:4];
+	<skip>	
+}
+
+:bnez rn, tgt is op0000=1 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
+	if (rn == 0) goto <skip>;
 	goto [tgt:4];
 	<skip>
 }
@@ -230,4 +270,44 @@ RepeatTgt: is rpb_ctx {
 
 :neg rn, rm is op0003=1 & op1215=0 & rn & rm {
 	rn = -rm;
+}
+
+:abs rn, rm is op0003=1 & op1215=0xF & rn & rm ; imm1631=3 {
+	local tmp = (rn - rm);
+	if (tmp > 0) goto <skip>;
+	tmp = -tmp;
+	<skip>
+	rn = tmp;
+}
+
+:sltu3 "r0", rn, rm is op0003=3 & op1215=0 & rn & rm {
+	r0 = zext(rn < rm);
+}
+
+:sltu3 "r0", rn, imm0307 is op0002=5 & op1215=6 & rn & imm0307 {
+	r0 = zext(rn < imm0307);
+}
+
+:sltu3 rn, rm, imm1631 is op0003=3 & op1215=0xC & rn & rm ; imm1631 {
+	rn = zext(rm < imm1631);
+}
+
+:srl rn, rm is op0003=0xC & op1215=2 & rn & rm {
+	rn = rn >> (rm & 0x1F);
+}
+
+:srl rn, imm0307 is op0002=2 & op1215=6 & rn & imm0307 {
+	rn = rn >> imm0307;
+}
+
+:sub rn, rm is op0003=4 & op1215=0 & rn & rm {
+	rn = rn - rm;
+}
+
+:or rn, rm is op0003=0 & op1215=1 & rn & rm {
+	rn = rn | rm;
+}
+
+:sleep is op0015=0x7062 {
+	sleep();
 }
