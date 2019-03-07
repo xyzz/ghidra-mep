@@ -90,6 +90,41 @@ RepeatTgt: is rpb_ctx {
 	goto RepeatTgt;
 }
 
+#
+#
+# Instructions
+#
+#
+
+#
+# Repeats, special handling
+#
+
+:erepeat end is op0015=0xe019 ; simm1631 [ rpb_ctx = inst_start + 4; end = inst_start + (simm1631 << 1); repeat_end = 2; globalset(end, repeat_end); globalset(end, rpb_ctx); ] {
+	rpb = inst_next;
+	rpe = end;
+}
+
+#
+# Arithmetics/logical 2-operand
+#
+
+:sub rn, rm is op0003=4 & op1215=0 & rn & rm {
+	rn = rn - rm;
+}
+
+:or rn, rm is op0003=0 & op1215=1 & rn & rm {
+	rn = rn | rm;
+}
+
+:and rn, rm is op0003=1 & op1215=1 & rn & rm {
+	rn = rn & rm;
+}
+
+:xor rn, rm is op0003=2 & op1215=1 & rn & rm {
+	rn = rn ^ rm;
+}
+
 :movh rn, Imm16 is op0007=0x21 & op1215=0xC & rn ; Imm16 {
 	rn = Imm16 << 16;
 }
@@ -117,11 +152,6 @@ RepeatTgt: is rpb_ctx {
 :ret is op0015=0x7002 {
 	pc = lp;
 	return [pc];
-}
-
-:erepeat end is op0015=0xe019 ; simm1631 [ rpb_ctx = inst_start + 4; end = inst_start + (simm1631 << 1); repeat_end = 2; globalset(end, repeat_end); globalset(end, rpb_ctx); ] {
-	rpb = inst_next;
-	rpe = end;
 }
 
 :mov rn, rm is op0003=0 & op1215=0 & rn & rm {
@@ -298,14 +328,6 @@ RepeatTgt: is rpb_ctx {
 
 :srl rn, imm0307 is op0002=2 & op1215=6 & rn & imm0307 {
 	rn = rn >> imm0307;
-}
-
-:sub rn, rm is op0003=4 & op1215=0 & rn & rm {
-	rn = rn - rm;
-}
-
-:or rn, rm is op0003=0 & op1215=1 & rn & rm {
-	rn = rn | rm;
 }
 
 :sleep is op0015=0x7062 {
