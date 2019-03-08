@@ -493,8 +493,9 @@ RepeatTgt: is rpb_ctx {
 	goto [tgt:4];
 }
 
-
-
+#
+# add3
+#
 
 :add3 rn, rm, Simm16 is op0003=0 & op1215=0xC & rn & rm ; Simm16 {
 	rn = rm + sext(Simm16:2);
@@ -508,6 +509,50 @@ RepeatTgt: is rpb_ctx {
 	rn = sp + imm;
 }
 
+#
+# sll/srl with reg
+#
+
+:sll rn, rm is op0003=0xE & op1215=2 & rn & rm {
+	rn = rn << (rm & 0x1F);
+}
+
+:srl rn, rm is op0003=0xC & op1215=2 & rn & rm {
+	rn = rn >> (rm & 0x1F);
+}
+
+#
+# sll3
+#
+
+:sll3 "r0", rn, imm0307 is op0002=7 & op1215=6 & rn & imm0307 {
+	r0 = rn << imm0307;
+}
+
+#
+# Unsigned/signed extends
+#
+
+:extb rn is op0007=0xD & op1215=1 & rn {
+	rn = sext(rn:1);
+}
+
+:extub rn is op0007=0x8D & op1215=1 & rn {
+	rn = zext(rn:1);
+}
+
+:exth rn is op0007=0x2D & op1215=1 & rn {
+	rn = sext(rn:2);
+}
+
+:extuh rn is op0007=0xAD & op1215=1 & rn {
+	rn = zext(rn:2);
+}
+
+#
+# ret
+#
+
 :ret is op0015=0x7002 {
 	pc = lp;
 	return [pc];
@@ -517,10 +562,6 @@ RepeatTgt: is rpb_ctx {
 # This is vita-specific
 # TODO: check it's actually correct
 	r0 = swi(imm0405:4, r1, r2, r3, r4);
-}
-
-:srl rn, rm is op0003=0xC & op1215=2 & rn & rm {
-	rn = rn >> (rm & 0x1F);
 }
 
 :sleep is op0015=0x7062 {
