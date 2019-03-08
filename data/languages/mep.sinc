@@ -519,13 +519,16 @@ BSRTarget0431: target is op0003=9 & op1115=0x1B & imm0410 ; simm1631 [ target = 
 	goto [rm];
 }
 
-:jmp tgt is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ tgt = (inst_start & 0xF0000000) | (imm1631 << 8) | (imm0410 << 1); ] {
-	pc = tgt;
-	goto [pc];
+JMPTarget: target is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ target = (inst_start & 0xF0000000) | (imm1631 << 8) | (imm0410 << 1); ] {
+	export *:4 target;
 }
 
-:bra tgt is op0000=0 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
-	goto [tgt:4];
+:jmp JMPTarget is JMPTarget {
+	goto JMPTarget;
+}
+
+:bra Target0111 is op0000=0 & op1215=0xB & Target0111 {
+	goto Target0111;
 }
 
 #
