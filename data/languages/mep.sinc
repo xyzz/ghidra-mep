@@ -350,7 +350,7 @@ RepeatTgt: is rpb_ctx {
 
 :abs rn, rm is op0003=1 & op1215=0xF & rn & rm ; imm1631=3 {
 	local temp = (rn - rm);
-	if (temp > 0) goto <skip>;
+	if (temp s> 0) goto <skip>;
 	temp = -temp;
 	<skip>
 	rn = temp;
