@@ -317,7 +317,9 @@ RepeatTgt: is rpb_ctx {
 # Special arithmetics
 #
 
-# nor - TODO
+:nor rn, rm is op0003=3 & op1215=1 & rn & rm {
+	rn = ~(rn | rm);
+}
 
 :neg rn, rm is op0003=1 & op1215=0 & rn & rm {
 	rn = -rm;
