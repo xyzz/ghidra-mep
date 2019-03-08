@@ -455,6 +455,44 @@ RepeatTgt: is rpb_ctx {
 	<skip>
 }
 
+#
+# Jumps/branches/function calls
+#
+
+:bsr tgt is op0000=1 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
+	lp = inst_next;
+	call [tgt:4];
+}
+
+:bsr tgt is op0003=9 & op1115=0x1B & imm0410 ; simm1631 [ tgt = inst_start + (((imm0410 << 1) | (simm1631 << 8))); ] {
+	lp = inst_next;
+	call [tgt:4];
+}
+
+:jsr rm is op0003=0xF & op0815=0x10 & rm {
+	lp = inst_next;
+	call [rm];
+}
+
+# Jumps to $11 and $1 are returns (in vita code)
+:jmp rm is op0003=0xE & op0815=0x10 & rm & (rm=1 | rm=11) {
+	return [rm];
+}
+
+# Other jumps are just branches
+:jmp rm is op0003=0xE & op0815=0x10 & rm {
+	goto [rm];
+}
+
+:jmp tgt is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ tgt = (inst_start & 0xF0000000) | (imm1631 << 8) | (imm0410 << 1); ] {
+	pc = tgt;
+	goto [pc];
+}
+
+:bra tgt is op0000=0 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
+	goto [tgt:4];
+}
+
 
 
 
@@ -475,44 +513,10 @@ RepeatTgt: is rpb_ctx {
 	return [pc];
 }
 
-# TODO: sign-extend
-:bsr tgt is op0003=9 & op1115=0x1B & imm0410 ; imm1631 [ tgt = inst_start + (((imm0410 << 1) | (imm1631 << 8))); ] {
-	lp = inst_next;
-	call [tgt:4];
-}
-
-:bsr tgt is op0000=1 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
-	lp = inst_next;
-	call [tgt:4];
-}
-
-:jsr rn is op0003=0xF & op0815=0x10 & rn {
-	lp = inst_next;
-	call rn;
-}
-
-:bra tgt is op0000=0 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
-	goto [tgt:4];
-}
-
 :swi imm0405 is op0003=6 & op0615=0x1C0 & imm0405 {
 # This is vita-specific
 # TODO: check it's actually correct
 	r0 = swi(imm0405:4, r1, r2, r3, r4);
-}
-
-# Jumps to $11 and $1 are returns (in vita code)
-:jmp rm is op0003=0xE & op0815=0x10 & rm & (rm=1 | rm=11) {
-	return [rm];
-}
-# Other jumps are just branches
-:jmp rm is op0003=0xE & op0815=0x10 & rm {
-	goto [rm];
-}
-
-:jmp tgt is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ tgt = (inst_start & 0xF0000000) | (imm1631 << 8) | (imm0410 << 1); ] {
-	pc = tgt;
-	goto [pc];
 }
 
 :srl rn, rm is op0003=0xC & op1215=2 & rn & rm {
