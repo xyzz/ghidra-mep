@@ -1,5 +1,7 @@
 # Toshiba MeP module for GHIDRA
 
+![Screenshot](/screenshot.png?raw=true)
+
 ## Build
 
 ```

@@ -10,7 +10,7 @@ trap "rm -rf $temp_dir" 0 2 3 15
 pushd $temp_dir
 
 cp -r $DIR mep
-rm -rf mep/.git* mep/README.md mep/release.sh mep/mep.zip
+rm -rf mep/.git* mep/README.md mep/release.sh mep/mep.zip mep/screenshot.png
 cd mep/data/languages
 sleigh -a
 cd ../../..
