@@ -67,7 +67,12 @@ attach variables [ rn rm rl ] [
 	r8  r9 r10 r11 r12  tp  gp  sp
 ];
 
-define pcodeop swi;
+define pcodeop interrupt_enable;
+define pcodeop interrupt_disable;
+define pcodeop control_bus_load;
+define pcodeop control_bus_store;
+define pcodeop exception_return;
+define pcodeop system_call;
 define pcodeop sleep;
 
 Imm16: "#"^imm1631 is imm1631 { export *[const]:4 imm1631; }
@@ -558,10 +563,34 @@ RepeatTgt: is rpb_ctx {
 	return [pc];
 }
 
+#
+# System instructions
+#
+
+:ei is op0015=0x7010 {
+	interrupt_enable();
+}
+
+:di is op0015=0x7000 {
+	interrupt_disable();
+}
+
+:reti is op0015=0x7012 {
+	exception_return();
+}
+
+:ldcb rn, imm1631 is op0007=0x14 & op1215=0xF & rn ; imm1631 {
+	rn = control_bus_load(imm1631:4);
+}
+
+:stcb rn, imm1631 is op0007=4 & op1215=0xF & rn ; imm1631 {
+	control_bus_store(imm1631:4, rn);
+}
+
 :swi imm0405 is op0003=6 & op0615=0x1C0 & imm0405 {
 # This is vita-specific
 # TODO: check it's actually correct
-	r0 = swi(imm0405:4, r1, r2, r3, r4);
+	r0 = system_call(imm0405:4, r1, r2, r3, r4);
 }
 
 :sleep is op0015=0x7062 {
