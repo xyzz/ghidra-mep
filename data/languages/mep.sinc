@@ -430,15 +430,19 @@ Target0107: target is disp0107 [ target = inst_start + (disp0107 << 1); ] {
 	export *:4 target;
 }
 
-:bne rn, rm, tgt is op0003=5 & op1215=0xE & rn & rm ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+Target1631: target is simm1631 [ target = inst_start + (simm1631 << 1); ] {
+	export *:4 target;
+}
+
+:bne rn, rm, Target1631 is op0003=5 & op1215=0xE & rn & rm ; Target1631 {
 	if (rn == rm) goto <skip>;
-	goto [tgt:4];
+	goto Target1631;
 	<skip>
 }
 
-:beq rn, rm, tgt is op0003=1 & op1215=0xE & rn & rm ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+:beq rn, rm, Target1631 is op0003=1 & op1215=0xE & rn & rm ; Target1631 {
 	if (rn != rm) goto <skip>;
-	goto [tgt:4];
+	goto Target1631;
 	<skip>
 }
 
@@ -454,31 +458,27 @@ Target0107: target is disp0107 [ target = inst_start + (disp0107 << 1); ] {
 	<skip>
 }
 
-:bnei rn, imm0407, tgt is op0003=4 & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+:bnei rn, imm0407, Target1631 is op0003=4 & op1215=0xE & rn & imm0407 ; Target1631 {
 	if (rn == imm0407) goto <skip>;
-	pc = tgt;
-	goto [pc];
+	goto Target1631;
 	<skip>
 }
 
-:beqi rn, imm0407, tgt is op0003=0 & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+:beqi rn, imm0407, Target1631 is op0003=0 & op1215=0xE & rn & imm0407 ; Target1631 {
 	if (rn != imm0407) goto <skip>;
-	pc = tgt;
-	goto [pc];
+	goto Target1631;
 	<skip>
 }
 
-:blti rn, imm0407, tgt is op0003=0xC & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+:blti rn, imm0407, Target1631 is op0003=0xC & op1215=0xE & rn & imm0407 ; Target1631 {
 	if (rn s>= imm0407) goto <skip>;
-	pc = tgt;
-	goto [pc];
+	goto Target1631;
 	<skip>
 }
 
-:bgei rn, imm0407, tgt is op0003=0x8 & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+:bgei rn, imm0407, Target1631 is op0003=0x8 & op1215=0xE & rn & imm0407 ; Target1631 {
 	if (rn s< imm0407) goto <skip>;
-	pc = tgt;
-	goto [pc];
+	goto Target1631;
 	<skip>
 }
 
