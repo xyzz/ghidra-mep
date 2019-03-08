@@ -197,7 +197,7 @@ RepeatTgt: is rpb_ctx {
 }
 
 :sb rn, "("^rm^")" is op0003=0x8 & op1215=0 & rn & rm {
-	*[ram]:1 rm = rn;
+	*[ram] rm = rn:1;
 }
 
 :lh rn, "("^rm^")" is op0003=0xD & op1215=0 & rn & rm {
@@ -209,7 +209,7 @@ RepeatTgt: is rpb_ctx {
 }
 
 :sh rn, "("^rm^")" is op0003=0x9 & op1215=0 & rn & rm {
-	*[ram]:2 rm = rn;
+	*[ram] rm = rn:2;
 }
 
 :lw rn, "("^rm^")" is op0003=0xE & op1215=0 & rn & rm {
@@ -250,7 +250,7 @@ RepeatTgt: is rpb_ctx {
 
 :sb rn, udisp0006^"(tp)" is op0707=0 & op1115=0x10 & rn & udisp0006 {
 	local tgt = tp + udisp0006;
-	*[ram]:1 tgt = rn;
+	*[ram] tgt = rn:1;
 }
 
 :lh rn, off^"(tp)" is op0000=0 & op0707=1 & op1115=0x11 & rn & udisp0106 [ off = udisp0106 << 1; ] {
@@ -265,7 +265,7 @@ RepeatTgt: is rpb_ctx {
 
 :sh rn, off^"(tp)" is op0000=0 & op0707=1 & op1115=0x10 & rn & udisp0106 [ off = udisp0106 << 1; ] {
 	local tgt = tp + off;
-	*[ram]:2 tgt = rn;
+	*[ram] tgt = rn:2;
 }
 
 :lw rn, off^"(tp)" is op0001=3 & op0707=1 & op1115=8 & rn & udisp0206 [ off = udisp0206 << 2; ] {
@@ -294,7 +294,7 @@ RepeatTgt: is rpb_ctx {
 
 :sb rn, simm1631^"("^rm^")" is op0003=0x8 & op1215=0xC & rn & rm ; simm1631 {
 	local tgt = rm + simm1631;
-	*[ram]:1 tgt = rn;
+	*[ram] tgt = rn:1;
 }
 
 :lh rn, simm1631^"("^rm^")" is op0003=0xD & op1215=0xC & rn & rm ; simm1631 {
@@ -309,7 +309,7 @@ RepeatTgt: is rpb_ctx {
 
 :sh rn, simm1631^"("^rm^")" is op0003=0x9 & op1215=0xC & rn & rm ; simm1631 {
 	local tgt = rm + simm1631;
-	*[ram]:2 tgt = rn;
+	*[ram] tgt = rn:2;
 }
 
 :lw rn, simm1631^"("^rm^")" is op0003=0xE & op1215=0xC & rn & rm ; simm1631 {
