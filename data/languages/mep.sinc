@@ -33,8 +33,8 @@ define token instr(16)
 	op1215 = (12, 15)
 	imm4 = (4, 7)
 	simm6 = (2, 7) signed
-	imm8 = (0, 7)
-	simm8 = (0, 7) signed
+	imm0007 = (0, 7)
+	simm0007 = (0, 7) signed
 	rn = (8, 11)
 	rm = (4, 7)
 	rl = (0, 3)
@@ -69,8 +69,6 @@ attach variables [ rn rm rl ] [
 
 define pcodeop swi;
 define pcodeop sleep;
-
-Simm8: "#"^simm8 is simm8 { export *[const]:4 simm8; }
 
 Imm16: "#"^imm1631 is imm1631 { export *[const]:4 imm1631; }
 Simm16: "#"^simm1631 is simm1631 { export *[const]:4 simm1631; }
@@ -333,10 +331,36 @@ RepeatTgt: is rpb_ctx {
 	rn = tmp;
 }
 
+#
+# Move instructions
+#
 
-:movh rn, Imm16 is op0007=0x21 & op1215=0xC & rn ; Imm16 {
-	rn = Imm16 << 16;
+:mov rn, rm is op0003=0 & op1215=0 & rn & rm {
+	rn = rm;
 }
+
+:mov rn, simm0007 is op1215=5 & rn & simm0007 {
+	rn = simm0007;
+}
+
+:mov rn, simm1631 is op0007=1 & op1215=0xC & rn ; simm1631 {
+	rn = simm1631;
+}
+
+:movh rn, imm1631 is op0007=0x21 & op1215=0xC & rn ; imm1631 {
+	rn = imm1631 << 16;
+}
+
+:movu rn, imm1631 is op0007=0x11 & op1215=0xC & rn ; imm1631 {
+	rn = imm1631;
+}
+
+:movu rn, imm24 is op1115=0x1A & rn & imm0007 ; imm1631 [ imm24 = imm0007 | (imm1631 << 8); ] {
+	rn = imm24;
+}
+
+
+
 
 :add3 rn, rm, Simm16 is op0003=0 & op1215=0xC & rn & rm ; Simm16 {
 	rn = rm + sext(Simm16:2);
@@ -355,24 +379,12 @@ RepeatTgt: is rpb_ctx {
 	return [pc];
 }
 
-:mov rn, rm is op0003=0 & op1215=0 & rn & rm {
-	rn = rm;
-}
-
-:mov rn, Simm8 is op1215=5 & rn & Simm8 {
-	rn = Simm8;
-}
-
 :ldc rn, Creg is op0103=5 & op1215=7 & rn & Creg {
 	rn = Creg;
 }
 
 :stc rn, Creg is op0103=4 & op1215=7 & rn & Creg {
 	Creg = rn;
-}
-
-:movu rn, imm24 is op1115=0x1A & rn & imm8 ; imm1631 [ imm24 = imm8 | (imm1631 << 8); ] {
-	rn = imm24;
 }
 
 # TODO: sign-extend
