@@ -359,6 +359,45 @@ RepeatTgt: is rpb_ctx {
 	rn = imm24;
 }
 
+#
+# Load/store control reg
+#
+
+:ldc rn, Creg is op0103=5 & op1215=7 & rn & Creg {
+	rn = Creg;
+}
+
+:stc rn, Creg is op0103=4 & op1215=7 & rn & Creg {
+	Creg = rn;
+}
+
+#
+# slt* instructions
+#
+
+:slt3 "r0", rn, rm is op0003=2 & op1215=0 & rn & rm {
+	r0 = zext(rn s< rm);
+}
+
+:sltu3 "r0", rn, rm is op0003=3 & op1215=0 & rn & rm {
+	r0 = zext(rn < rm);
+}
+
+:slt3 "r0", rn, imm0307 is op0002=1 & op1215=6 & rn & imm0307 {
+	r0 = zext(rn s< imm0307);
+}
+
+:sltu3 "r0", rn, imm0307 is op0002=5 & op1215=6 & rn & imm0307 {
+	r0 = zext(rn < imm0307);
+}
+
+:slt3 rn, rm, imm1631 is op0003=2 & op1215=0xC & rn & rm ; imm1631 {
+	rn = zext(rm s< imm1631);
+}
+
+:sltu3 rn, rm, imm1631 is op0003=3 & op1215=0xC & rn & rm ; imm1631 {
+	rn = zext(rm < imm1631);
+}
 
 
 
@@ -377,14 +416,6 @@ RepeatTgt: is rpb_ctx {
 :ret is op0015=0x7002 {
 	pc = lp;
 	return [pc];
-}
-
-:ldc rn, Creg is op0103=5 & op1215=7 & rn & Creg {
-	rn = Creg;
-}
-
-:stc rn, Creg is op0103=4 & op1215=7 & rn & Creg {
-	Creg = rn;
 }
 
 # TODO: sign-extend
@@ -465,18 +496,6 @@ RepeatTgt: is rpb_ctx {
 	pc = tgt;
 	goto [pc];
 	<skip>
-}
-
-:sltu3 "r0", rn, rm is op0003=3 & op1215=0 & rn & rm {
-	r0 = zext(rn < rm);
-}
-
-:sltu3 "r0", rn, imm0307 is op0002=5 & op1215=6 & rn & imm0307 {
-	r0 = zext(rn < imm0307);
-}
-
-:sltu3 rn, rm, imm1631 is op0003=3 & op1215=0xC & rn & rm ; imm1631 {
-	rn = zext(rm < imm1631);
 }
 
 :srl rn, rm is op0003=0xC & op1215=2 & rn & rm {
