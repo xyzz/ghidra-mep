@@ -426,6 +426,10 @@ RepeatTgt: is rpb_ctx {
 # Conditional branches
 #
 
+Target0107: target is disp0107 [ target = inst_start + (disp0107 << 1); ] {
+	export *:4 target;
+}
+
 :bne rn, rm, tgt is op0003=5 & op1215=0xE & rn & rm ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
 	if (rn == rm) goto <skip>;
 	goto [tgt:4];
@@ -438,15 +442,15 @@ RepeatTgt: is rpb_ctx {
 	<skip>
 }
 
-:bnez rn, tgt is op0000=1 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
+:bnez rn, Target0107 is op0000=1 & op1215=0xA & rn & Target0107 {
 	if (rn == 0) goto <skip>;
-	goto [tgt:4];
+	goto Target0107;
 	<skip>
 }
 
-:beqz rn, tgt is op0000=0 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
+:beqz rn, Target0107 is op0000=0 & op1215=0xA & rn & Target0107 {
 	if (rn != 0) goto <skip>;
-	goto [tgt:4];
+	goto Target0107;
 	<skip>
 }
 
