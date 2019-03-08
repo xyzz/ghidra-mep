@@ -486,14 +486,22 @@ Target1631: target is simm1631 [ target = inst_start + (simm1631 << 1); ] {
 # Jumps/branches/function calls
 #
 
-:bsr tgt is op0000=1 & op1215=0xB & disp0111 [ tgt = inst_start + (disp0111 << 1); ] {
-	lp = inst_next;
-	call [tgt:4];
+Target0111: target is disp0111 [ target = inst_start + (disp0111 << 1); ] {
+	export *:4 target;
 }
 
-:bsr tgt is op0003=9 & op1115=0x1B & imm0410 ; simm1631 [ tgt = inst_start + (((imm0410 << 1) | (simm1631 << 8))); ] {
+:bsr Target0111 is op0000=1 & op1215=0xB & Target0111 {
 	lp = inst_next;
-	call [tgt:4];
+	call Target0111;
+}
+
+BSRTarget0431: target is op0003=9 & op1115=0x1B & imm0410 ; simm1631 [ target = inst_start + (((imm0410 << 1) | (simm1631 << 8))); ] {
+	export *:4 target;
+}
+
+:bsr BSRTarget0431 is BSRTarget0431 {
+	lp = inst_next;
+	call BSRTarget0431;
 }
 
 :jsr rm is op0003=0xF & op0815=0x10 & rm {
