@@ -17,6 +17,7 @@ define register offset=0x2000 size=4 [
 define register offset=0x00 size=8   contextreg;
 define context contextreg
 	repeat_end = (0, 4) noflow
+	erepeat_end = (4, 8) noflow
 #	rpe_ctx = (32, 63) noflow
 	rpb_ctx = (32, 63) noflow
 ;
@@ -86,13 +87,26 @@ RepeatTgt: is rpb_ctx {
 }
 
 # Simulate mep delay slot in repeat/erepeat instructions
+:^instruction is erepeat_end=2 & instruction [ erepeat_end=1; globalset(inst_next, erepeat_end); erepeat_end=0; globalset(inst_next, rpb_ctx); ] {
+	build instruction;
+}
+
+:^instruction is erepeat_end=1 & instruction & RepeatTgt [ erepeat_end=0; ] {
+	build instruction;
+	goto RepeatTgt;
+}
+
+
 :^instruction is repeat_end=2 & instruction [ repeat_end=1; globalset(inst_next, repeat_end); repeat_end=0; globalset(inst_next, rpb_ctx); ] {
 	build instruction;
 }
 
 :^instruction is repeat_end=1 & instruction & RepeatTgt [ repeat_end=0; ] {
 	build instruction;
+	rpc = rpc - 1;
+	if (rpc == 0) goto <out>;
 	goto RepeatTgt;
+	<out>
 }
 
 #
@@ -105,9 +119,13 @@ RepeatTgt: is rpb_ctx {
 # Repeats, special handling
 #
 
-:erepeat end is op0015=0xe019 ; simm1631 [ rpb_ctx = inst_start + 4; end = inst_start + (simm1631 << 1); repeat_end = 2; globalset(end, repeat_end); globalset(end, rpb_ctx); ] {
+:erepeat end is op0015=0xe019 ; simm1631 [ rpb_ctx = inst_start + 4; end = inst_start + (simm1631 << 1); erepeat_end = 2; globalset(end, erepeat_end); globalset(end, rpb_ctx); ] {
 	rpb = inst_next;
 	rpe = end;
+}
+
+:repeat rn, end is op0007=9 & op1215=0xE & rn ; simm1631 [ rpb_ctx = inst_start + 4; end = inst_start + (simm1631 << 1); repeat_end = 2; globalset(end, repeat_end); globalset(end, rpb_ctx); ] {
+	rpc = rn + 1;
 }
 
 #
