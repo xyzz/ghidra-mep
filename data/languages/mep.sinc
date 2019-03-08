@@ -10,8 +10,10 @@ define register offset=0x1000 size=4 [
 ];
 
 define register offset=0x2000 size=4 [
-	pc  lp  sar res03
-	rpb rpe rpc
+	pc    lp    sar   res03 rpb   rpe   rpc   hi
+	lo    res09 res10 res11 mb0   me0   mb1   me1
+	psw   id    tmp   epc   exc   cfg   res22 npc
+	dbg   depc  opt   rcfg  ccfg  res29 res30 res31
 ];
 
 define register offset=0x00 size=8   contextreg;
@@ -347,11 +349,11 @@ RepeatTgt: is rpb_ctx {
 }
 
 :abs rn, rm is op0003=1 & op1215=0xF & rn & rm ; imm1631=3 {
-	local tmp = (rn - rm);
-	if (tmp > 0) goto <skip>;
-	tmp = -tmp;
+	local temp = (rn - rm);
+	if (temp > 0) goto <skip>;
+	temp = -temp;
 	<skip>
-	rn = tmp;
+	rn = temp;
 }
 
 #
