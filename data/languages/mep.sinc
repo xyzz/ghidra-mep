@@ -31,7 +31,7 @@ define token instr(16)
 	op0207 = (2, 7)
 	op0407 = (4, 7)
 	op1215 = (12, 15)
-	imm4 = (4, 7)
+	imm0407 = (4, 7)
 	simm6 = (2, 7) signed
 	imm0007 = (0, 7)
 	simm0007 = (0, 7) signed
@@ -399,6 +399,63 @@ RepeatTgt: is rpb_ctx {
 	rn = zext(rm < imm1631);
 }
 
+#
+# Conditional branches
+#
+
+:bne rn, rm, tgt is op0003=5 & op1215=0xE & rn & rm ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn == rm) goto <skip>;
+	goto [tgt:4];
+	<skip>
+}
+
+:beq rn, rm, tgt is op0003=1 & op1215=0xE & rn & rm ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn != rm) goto <skip>;
+	goto [tgt:4];
+	<skip>
+}
+
+:bnez rn, tgt is op0000=1 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
+	if (rn == 0) goto <skip>;
+	goto [tgt:4];
+	<skip>
+}
+
+:beqz rn, tgt is op0000=0 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
+	if (rn != 0) goto <skip>;
+	goto [tgt:4];
+	<skip>
+}
+
+:bnei rn, imm0407, tgt is op0003=4 & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn == imm0407) goto <skip>;
+	pc = tgt;
+	goto [pc];
+	<skip>
+}
+
+:beqi rn, imm0407, tgt is op0003=0 & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn != imm0407) goto <skip>;
+	pc = tgt;
+	goto [pc];
+	<skip>
+}
+
+:blti rn, imm0407, tgt is op0003=0xC & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn s>= imm0407) goto <skip>;
+	pc = tgt;
+	goto [pc];
+	<skip>
+}
+
+:bgei rn, imm0407, tgt is op0003=0x8 & op1215=0xE & rn & imm0407 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
+	if (rn s< imm0407) goto <skip>;
+	pc = tgt;
+	goto [pc];
+	<skip>
+}
+
+
 
 
 :add3 rn, rm, Simm16 is op0003=0 & op1215=0xC & rn & rm ; Simm16 {
@@ -456,46 +513,6 @@ RepeatTgt: is rpb_ctx {
 :jmp tgt is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ tgt = (inst_start & 0xF0000000) | (imm1631 << 8) | (imm0410 << 1); ] {
 	pc = tgt;
 	goto [pc];
-}
-
-:beqz rn, tgt is op0000=0 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
-	if (rn != 0) goto <skip>;
-	goto [tgt:4];
-	<skip>
-}
-
-
-:beq rn, rm, tgt is op0003=1 & op1215=0xE & rn & rm ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
-	if (rn != rm) goto <skip>;
-	goto [tgt:4];
-	<skip>	
-}
-
-:bnez rn, tgt is op0000=1 & op1215=0xA & rn & disp0107 [ tgt = inst_start + (disp0107 << 1); ] {
-	if (rn == 0) goto <skip>;
-	goto [tgt:4];
-	<skip>
-}
-
-:bnei rn, imm4, tgt is op0003=4 & op1215=0xE & rn & imm4 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
-	if (rn == imm4) goto <skip>;
-	pc = tgt;
-	goto [pc];
-	<skip>
-}
-
-:blti rn, imm4, tgt is op0003=0xC & op1215=0xE & rn & imm4 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
-	if (rn s>= imm4) goto <skip>;
-	pc = tgt;
-	goto [pc];
-	<skip>
-}
-
-:bgei rn, imm4, tgt is op0003=0x8 & op1215=0xE & rn & imm4 ; simm1631 [ tgt = inst_start + (simm1631 << 1); ] {
-	if (rn s< imm4) goto <skip>;
-	pc = tgt;
-	goto [pc];
-	<skip>
 }
 
 :srl rn, rm is op0003=0xC & op1215=2 & rn & rm {
