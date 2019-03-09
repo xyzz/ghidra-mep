@@ -78,12 +78,10 @@ define pcodeop exception_return;
 define pcodeop system_call;
 define pcodeop sleep;
 define pcodeop syncm;
+define pcodeop write_control_reg;
 
 Imm16: "#"^imm1631 is imm1631 { export *[const]:4 imm1631; }
 Simm16: "#"^simm1631 is simm1631 { export *[const]:4 simm1631; }
-
-# Control register
-Creg: regaddr is op0000 & op0407 [ regaddr = ((op0000 << 4) | op0407) * 4 + 0x2000; ] { export *[register]:4 regaddr; }
 
 RepeatTgt: is rpb_ctx {
 	export *[ram]:4 rpb_ctx;
@@ -389,12 +387,22 @@ RepeatTgt: is rpb_ctx {
 # Load/store control reg
 #
 
+Creg: regaddr is op0000 & op0407 [ regaddr = ((op0000 << 4) | op0407) * 4 + 0x2000; ] { export *[register]:4 regaddr; }
+
+# Special handling for link pointer
+:ldc rn, Creg is op0103=5 & op1215=7 & rn & Creg & op0000=0 & op0407=1 {
+	rn = Creg;
+}
+:stc rn, Creg is op0103=4 & op1215=7 & rn & Creg & op0000=0 & op0407=1 {
+	Creg = rn;
+}
+
+# For the rest, use a custom pcodeop for write
 :ldc rn, Creg is op0103=5 & op1215=7 & rn & Creg {
 	rn = Creg;
 }
-
 :stc rn, Creg is op0103=4 & op1215=7 & rn & Creg {
-	Creg = rn;
+	write_control_reg(Creg, rn);
 }
 
 #
