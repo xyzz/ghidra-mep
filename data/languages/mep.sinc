@@ -599,6 +599,18 @@ JMPTarget: target is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ target = (inst
 }
 
 #
+# sl*ad3
+#
+
+:sl1ad3 "r0", rn, rm is op0003=6 & op1215=2 & rn & rm {
+	r0 = (rn << 1) + rm;
+}
+
+:sl2ad3 "r0", rn, rm is op0003=7 & op1215=2 & rn & rm {
+	r0 = (rn << 2) + rm;
+}
+
+#
 # ret
 #
 
