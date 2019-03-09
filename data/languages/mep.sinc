@@ -611,6 +611,58 @@ JMPTarget: target is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ target = (inst
 }
 
 #
+# Multiplication
+#
+
+:mul rn, rm is op0003=4 & op1215=1 & rn & rm {
+	local a:8 = sext(rn);
+	local b:8 = sext(rm);
+	local result:8 = a * b;
+	hi = result(4);
+	lo = result:4;
+}
+
+:mulr rn, rm is op0003=6 & op1215=1 & rn & rm {
+	local a:8 = sext(rn);
+	local b:8 = sext(rm);
+	local result:8 = a * b;
+	hi = result(4);
+	lo = result:4;
+	rn = lo;
+}
+
+:mulu rn, rm is op0003=5 & op1215=1 & rn & rm {
+	local a:8 = zext(rn);
+	local b:8 = zext(rm);
+	local result:8 = a * b;
+	hi = result(4);
+	lo = result:4;
+}
+
+:mulru rn, rm is op0003=7 & op1215=1 & rn & rm {
+	local a:8 = zext(rn);
+	local b:8 = zext(rm);
+	local result:8 = a * b;
+	hi = result(4);
+	lo = result:4;
+	rn = lo;
+}
+
+#
+# Division
+#
+
+:div rn, rm is op0003=8 & op1215=1 & rn & rm {
+	lo = rn s/ rm;
+	hi = rn s% rm;
+}
+
+:divu rn, rm is op0003=9 & op1215=1 & rn & rm {
+	lo = rn / rm;
+	hi = rn % rm;
+}
+
+#
 # ret
 #
 
