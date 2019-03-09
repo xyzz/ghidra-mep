@@ -77,6 +77,7 @@ define pcodeop control_bus_store;
 define pcodeop exception_return;
 define pcodeop system_call;
 define pcodeop sleep;
+define pcodeop syncm;
 
 Imm16: "#"^imm1631 is imm1631 { export *[const]:4 imm1631; }
 Simm16: "#"^simm1631 is simm1631 { export *[const]:4 simm1631; }
@@ -630,4 +631,8 @@ JMPTarget: target is op0003=8 & op1115=0x1B & imm0410 ; imm1631 [ target = (inst
 
 :sleep is op0015=0x7062 {
 	sleep();
+}
+
+:syncm is op0015=0x7011 {
+	syncm();
 }
