@@ -1,0 +1,237 @@
+ABS $0,$1
+
+ADD $0,7
+
+ADD3 $2,$SP,32
+ADD3 $1,$2,$3
+ADD3 $1,$2,0x7FFF
+
+ADVCK3 $0,$1,$2
+
+AND $0,$1
+
+AND3 $0,$1,0x77
+
+AVE $0,$1
+
+BCLRM ($0),0x3
+
+0: BEQ $0,$1,0b
+
+0: BEQI $0,14,0b
+
+0: BEQZ $0,0b
+
+0: BGEI $0,14,0b
+
+0: BLTI $0,14,0b
+
+0: BNE $0,$1,0b
+
+0: BNEI $0,14,0b
+
+0: BNEZ $0,0b
+
+BNOTM ($0),7
+
+0: BRA 0b
+
+BREAK
+
+BSETM ($0),4
+
+0: BSR 0b
+BSR 0x1234
+
+# BSRV
+
+BTSTM $0,($1),4
+
+CACHE 3,($0)
+
+CLIP $0,1
+
+CLIPU $0,1
+
+DBREAK
+
+DI
+
+DIV $0,$1
+
+DIVU $0,$1
+
+DRET
+
+# DSP
+
+# DSP0
+
+# DSP1
+
+EI
+
+0: EREPEAT 0b
+
+EXTB $0
+
+EXTH $0
+
+EXTUB $0
+
+EXTUH $0
+
+FSFT $0,$1
+
+HALT
+
+JMP $0
+JMP 0x1234
+
+JSR $0
+
+# JSRV
+
+LB $0,($1)
+LB $0,4($TP)
+LB $8,0x1234($7)
+
+LBU $0,($1)
+LBU $0,4($TP)
+LBU $8,0x1234($7)
+
+LDC $0,0x12
+
+LDCB $0,0x1234
+
+LDZ $0,$1
+
+LH $0,($1)
+LH $0,4($TP)
+LH $8,0x1234($7)
+
+LHU $0,($1)
+LHU $0,4($TP)
+LHU $8,0x1234($7)
+
+LW $0,($1)
+LW $0,4($SP)
+LW $0,4($TP)
+LW $8,0x1234($7)
+LW $8,(0x801234)
+
+MADD $0,$1
+
+MADDR $0,$1
+
+MADDRU $0,$1
+
+MADDU $0,$1
+
+MAX $0,$1
+
+MAXU $0,$1
+
+MIN $0,$1
+
+MINU $0,$1
+
+MOV $0,$1
+MOV $0,8
+MOV $0,0x1234
+
+MOVH $0,0x1234
+
+MOVU $8,0x1234
+MOVU $1,0x801234
+
+MUL $0,$1
+
+MULR $0,$1
+
+MULRU $0,$1
+
+MULU $0,$1
+
+NEG $0,$1
+
+NOR $0,$1
+
+OR $0,$1
+
+OR3 $0,$1,0x1234
+
+0: REPEAT $0,0b
+
+RET
+
+RETI
+
+SADD $0,$1
+
+SADDU $0,$1
+
+SB $8,($1)
+SB $0,4($TP)
+SB $8,0x1234($6)
+
+SBVCK3 $0,$1,$2
+
+SH $8,($1)
+SH $0,4($TP)
+SH $8,0x1234($6)
+
+SL1AD3 $0,$1,$2
+
+SL2AD3 $0,$1,$2
+
+SLEEP
+
+SLL $0,$1
+SLL $0,24
+
+SLL3 $0,$1,24
+
+SLT3 $0,$1,$2
+SLT3 $0,$1,0x12
+SLT3 $0,$1,0x1234
+
+SLTU3 $0,$1,$2
+SLTU3 $0,$1,0x12
+SLTU3 $0,$1,0x1234
+
+SRA $0,$1
+SRA $0,0x12
+
+SRL $0,$1
+SRL $0,0x12
+
+SSARB 3($0)
+
+SSUB $0,$1
+
+SSUBU $0,$1
+
+STC $0,0x12
+
+STCB $0,0x1234
+
+SUB $0,$1
+
+SW $0,($1)
+SW $0,4($SP)
+SW $0,4($TP)
+SW $8,0x1234($7)
+SW $8,(0x801234)
+
+SWI 3
+
+SYNCM
+
+TAS $0,($1)
+
+# UCI
+
+XOR $0,$1
+
+XOR3 $0,$1,0x1234
